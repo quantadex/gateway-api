@@ -163,3 +163,8 @@ paths:
         - https
       tags:
         - wrapper
+  "/register_account":
+    post:
+      description: registers an account
+      tags:
+        - wrapper

@@ -7,9 +7,14 @@ from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, query, Q, DocType, utils
 from elasticsearch_dsl.exceptions import IllegalOperation
 
+from registration import register_user
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+import os
 from flasgger import Swagger
 
-es = Elasticsearch(timeout=60)
+es = Elasticsearch([os.environ['ELASTICSEARCH_URL']],timeout=60)
 app = Flask(__name__)
 from flask_cors import CORS, cross_origin
 CORS(app)
@@ -20,9 +25,11 @@ app.config['SWAGGER'] = {
 }
 Swagger(app, template_file='wrapper.yaml')
 
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["5 per sec"]
+)
 
 @app.route('/get_account_history')
 def get_account_history():
@@ -36,11 +43,13 @@ def get_account_history():
     sort_by = request.args.get('sort_by', "-block_data.block_time")
     type = request.args.get('type', "data")
     agg_field = request.args.get('agg_field', "operation_type")
-
+    filter_field = request.args.get('filter_field', False)
+    filter_value = request.args.get('filter_value', False)
+    
     if type != "data":
-        s = Search(using=es, index="bitshares-*")
+        s = Search(using=es, index="quanta-*")
     else:
-        s = Search(using=es, index="bitshares-*", extra={"size": size, "from": from_})
+        s = Search(using=es, index="quanta-*", extra={"size": size, "from": from_})
 
     q = Q()
     if account_id and operation_type:
@@ -52,6 +61,12 @@ def get_account_history():
 
     range_query = Q("range", block_data__block_time={'gte': from_date, 'lte': to_date})
     s.query = q & range_query
+
+    #operation_history__operation_result
+    if filter_field and filter_value:   
+        #print(filter_field,filter_value.split(","))   
+        kv = { filter_field:  filter_value.split(",")}  
+        s = s.filter("terms", **kv)
 
     if type != "data":
         s.aggs.bucket('per_field', 'terms', field=agg_field, size=size)
@@ -150,8 +165,20 @@ def get_trx():
 
     return jsonify(results)
 
+@app.route('/register_account',methods=['POST'])
+@limiter.limit("10 per day")
+def register_account():
+    registrar = os.environ.get("REGISTRAR")
+    referrer = os.environ.get("REFERRER")
+
+    content = request.json
+
+    try:
+        register_user(content["name"], content["public_key"], registrar, referrer)
+        return jsonify({"status": "success"})
+    except Exception as inst:
+        return jsonify({"error": str(inst)}), 400
 
 
-if __name__ == '__main__':
-    app.run()
-
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
