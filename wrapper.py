@@ -10,6 +10,8 @@ from elasticsearch_dsl.exceptions import IllegalOperation
 from registration import register_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import ccxt
+import urllib
 
 import os
 from flasgger import Swagger
@@ -24,12 +26,12 @@ app.config['SWAGGER'] = {
     'uiversion': 2
 }
 Swagger(app, template_file='wrapper.yaml')
-
-limiter = Limiter(
-    app,
-    key_func=get_remote_address,
-    default_limits=["5 per sec"]
-)
+#
+# limiter = Limiter(
+#     app,
+#     key_func=get_remote_address,
+#     default_limits=["5 per sec"]
+# )
 
 @app.route('/get_account_history')
 def get_account_history():
@@ -166,7 +168,7 @@ def get_trx():
     return jsonify(results)
 
 @app.route('/register_account',methods=['POST'])
-@limiter.limit("10 per day")
+# @limiter.limit("10 per day")
 def register_account():
     registrar = os.environ.get("REGISTRAR")
     referrer = os.environ.get("REFERRER")
@@ -178,6 +180,26 @@ def register_account():
         return jsonify({"status": "success"})
     except Exception as inst:
         return jsonify({"error": str(inst)}), 400
+
+@app.route('/get_external_price')
+def get_external_price():
+    exchange_str = request.args.get('exchange')
+    symbol = urllib.parse.unquote(request.args.get('symbol'))
+    timeframe = request.args.get('timeframe',"1m").lower()
+    since = request.args.get('since')
+    limit = int(request.args.get('limit',"1000"))
+
+    exchange_found = exchange_str in ccxt.exchanges
+    if exchange_found:
+        exchange = getattr(ccxt, exchange_str)({
+            'timeout': 20000})
+        if since is None:
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe)
+        else:
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, int(since), limit)
+        return jsonify(ohlcv)
+    else:
+        return jsonify({"error": "exchange not found"}), 400
 
 
 if __name__ == "__main__":
