@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, query, Q, DocType, utils
 from elasticsearch_dsl.exceptions import IllegalOperation
 
-from registration import register_user
+from registration import register_user, register_airdrop
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import ccxt
@@ -201,6 +201,18 @@ def get_external_price():
     else:
         return jsonify({"error": "exchange not found"}), 400
 
+
+@app.route('/claim_airdrop',methods=['POST'])
+def claim_airdrop():
+    content = request.data
+    registrar = os.environ.get("REGISTRAR")
+    referrer = os.environ.get("REFERRER")
+    sig = request.headers.get('signature')
+
+    try:
+        return jsonify(register_airdrop(content, registrar, referrer, sig))
+    except Exception as inst:
+        return jsonify({"error": str(inst)}), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
