@@ -171,12 +171,12 @@ def get_trx():
 # @limiter.limit("10 per day")
 def register_account():
     registrar = os.environ.get("REGISTRAR")
-    referrer = os.environ.get("REFERRER")
+    referrer_default = os.environ.get("REFERRER")
 
     content = request.json
 
     try:
-        register_user(content["name"], content["public_key"], registrar, referrer)
+        register_user(content["name"], content["public_key"], registrar, "referrer" in content and content["referrer"] or referrer_default)
         return jsonify({"status": "success"})
     except Exception as inst:
         return jsonify({"error": str(inst)}), 400
