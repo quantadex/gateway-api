@@ -50,8 +50,9 @@ def register_airdrop(msgRaw, registrar, referrer, signature):
     except AccountDoesNotExistsException:
         pass
 
+    free_QDEX = float(os.environ.get("FREE_QDEX"))
     account_tx = conn.create_account(msgObj["name"], registrar, referrer, 100, msgObj["public_key"], msgObj["public_key"], msgObj["public_key"])
-    conn.transfer(msgObj["name"], 1.0, "QDEX", "free QDEX", registrar)
+    conn.transfer(msgObj["name"], free_QDEX, "QDEX", "free QDEX", registrar)
     conn.transfer(msgObj["name"], msgObj["amount"], "QAIR", "Airdrop tokens", registrar)
     return { "result" : "Account successfully claimed. Login @ trade.quantadex.com with your private key" }
 
