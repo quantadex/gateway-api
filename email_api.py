@@ -113,8 +113,34 @@ def send_walletinfo(email, confirm, public_key, account, json_str):
         raise InvalidMessageSignature("Confirm code is not correct")
 
 
+# try {
+#   val client = new OkHttpClient()
+#   val body = new FormEncodingBuilder()
+#     .add("name", user.first_name.getOrElse(""))
+#     .add("email", user.email)
+#     .add("list", config.get[String]("sendy.subscribe.list"))
+#     .add("Created", user.created_at.toDate.toString)
+#     .add("ReferralToken", user.referral_code.getOrElse(""))
+#     .add("ActivateToken", user.token)
+#     .add("Activated", user.activated.toString)
+#     .build()
+#
+#   val request = new Request.Builder().url("http://sendy.env.quantadex.com/subscribe").post(body).build()
+#   val response = client.newCall(request).execute()
+#   if (response.isSuccessful) {
+#     println(response.body().string())
+#     false
+#   } else {
+#     true
+#   }
+# } catch {
+#   case ex: Exception =>
+#     Logger.error("Sendy error", ex)
+#     false
+# }
+#
 #verify_email("quocble@gmail.com")
 
-send_walletinfo("quocble@gmail.com",79365,"public", "account", "eyJlbmNyeXB0aW9uX2tleSI6IjAzMjIzODQ4NzJiMmZlZGVlOTJjMjU5Njk4Mjc3ZTZhYzUzYjA4NTdjMGQ1MGJjN2M1ODhiMjY1MmNiZjFlMGQ3YTZhZjQ4ODg2YTIyMTZkZTBjMmYxZGQ0ZjI3NjNmNyIsIndhbGxldF9lbmNyeXB0aW9uX2tleSI6ImUzMmM5ZTczMzAxMjQ2ZjA0MjMwMmE0MzViZGE4MjVhYWE4MTM1ZTEyYWRlMWY4YjA0Mzg3Mjg3YTgyZTE3Y2EyOWZlZjRiMmRjMDMwM2UxMDNkZTk1YWUzNTIwMmE2NiIsInBhc3N3b3JkX3B1YmtleSI6IlFBOFNVZzd0MlNaZm14a3ZRZ0JncjlKSkxRcHRRbU1pVmhiOVpYZ3l0ZXByOGQxNzFyUGsifQ==")
+# send_walletinfo("quocble@gmail.com",79365,"public", "account", "eyJlbmNyeXB0aW9uX2tleSI6IjAzMjIzODQ4NzJiMmZlZGVlOTJjMjU5Njk4Mjc3ZTZhYzUzYjA4NTdjMGQ1MGJjN2M1ODhiMjY1MmNiZjFlMGQ3YTZhZjQ4ODg2YTIyMTZkZTBjMmYxZGQ0ZjI3NjNmNyIsIndhbGxldF9lbmNyeXB0aW9uX2tleSI6ImUzMmM5ZTczMzAxMjQ2ZjA0MjMwMmE0MzViZGE4MjVhYWE4MTM1ZTEyYWRlMWY4YjA0Mzg3Mjg3YTgyZTE3Y2EyOWZlZjRiMmRjMDMwM2UxMDNkZTk1YWUzNTIwMmE2NiIsInBhc3N3b3JkX3B1YmtleSI6IlFBOFNVZzd0MlNaZm14a3ZRZ0JncjlKSkxRcHRRbU1pVmhiOVpYZ3l0ZXByOGQxNzFyUGsifQ==")
 
 #make_qr("eyJlbmNyeXB0aW9uX2tleSI6IjAzMjIzODQ4NzJiMmZlZGVlOTJjMjU5Njk4Mjc3ZTZhYzUzYjA4NTdjMGQ1MGJjN2M1ODhiMjY1MmNiZjFlMGQ3YTZhZjQ4ODg2YTIyMTZkZTBjMmYxZGQ0ZjI3NjNmNyIsIndhbGxldF9lbmNyeXB0aW9uX2tleSI6ImUzMmM5ZTczMzAxMjQ2ZjA0MjMwMmE0MzViZGE4MjVhYWE4MTM1ZTEyYWRlMWY4YjA0Mzg3Mjg3YTgyZTE3Y2EyOWZlZjRiMmRjMDMwM2UxMDNkZTk1YWUzNTIwMmE2NiIsInBhc3N3b3JkX3B1YmtleSI6IlFBOFNVZzd0MlNaZm14a3ZRZ0JncjlKSkxRcHRRbU1pVmhiOVpYZ3l0ZXByOGQxNzFyUGsifQ==")
