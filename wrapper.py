@@ -214,5 +214,38 @@ def claim_airdrop():
     except Exception as inst:
         return jsonify({"error": str(inst)}), 200
 
+
+
+from email_api import verify_email, check_code, send_walletinfo
+
+@app.route('/account/verify_email',methods=['POST'])
+def verify_email_post():
+    content = request.json
+    try:
+        verify_email(content["email"])
+        return jsonify({"success": True})
+    except Exception as inst:
+        return jsonify({"error": str(inst)}), 200
+
+@app.route('/account/confirm_email',methods=['POST'])
+def confirm_email_post():
+    content = request.json
+    try:
+        if check_code(content["email"], int(content["confirm"])):
+            return jsonify({"success": True})
+        else:
+            return jsonify({"error": "wrong code"}), 400
+    except Exception as inst:
+        return jsonify({"error": str(inst)}), 200
+
+@app.route('/account/send_walletinfo',methods=['POST'])
+def sendwallet_post():
+    content = request.json
+    try:
+        send_walletinfo(content["email"], int(content["confirm"]), content["public_key"], content["account"], content["json"])
+        return jsonify({"success": True})
+    except Exception as inst:
+        return jsonify({"error": str(inst)}), 200
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)

@@ -1,0 +1,26 @@
+You have successfully setup your QUANTA Wallet key.
+
+These are your public information which are safe to share.
+
+  Account:  {{account}}
+Public Key:  {{public_key}}
+
+These are your private information. Do not share.
+
+1) Attached Encrypted Private Key JSON, protected by your password.
+
+2) Attached QRCode which you can scan from your mobile app to login.
+
+3) Encrypted Private Key Base58, protected by your password.
+
+{{base58_key}}
+
+
+Keep in mind:
+  * We do not store your private key in encrypted, password, or decrypted private key.
+  * We cannot recover if you lose them.
+
+Make sure you keep this email,  backup, and write down your password somewhere.
+
+Thanks,
+QUANTA
