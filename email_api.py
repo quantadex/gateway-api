@@ -108,7 +108,7 @@ def send_walletinfo(email, confirm, public_key, account, json_str):
         with smtplib.SMTP(smtp_options['host'], smtp_options['port']) as s:
             s.starttls()
             s.login(smtp_options['user'], smtp_options['password'])
-            #s.send_message(msg)
+            s.send_message(msg)
     else:
         raise InvalidMessageSignature("Confirm code is not correct")
 
