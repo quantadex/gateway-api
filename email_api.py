@@ -82,7 +82,7 @@ def send_walletinfo(email, confirm, public_key, account, json_str):
         jsonObj = json.loads(rawJson)
         base58_key = base58.b58encode(unhexlify(jsonObj["encryption_key"]) + unhexlify(jsonObj["wallet_encryption_key"]))
 
-        qr_image = make_qr(json)
+        qr_image = make_qr(json_str)
         imgBytes = io.BytesIO()
         qr_image.save(imgBytes, format='PNG')
 
