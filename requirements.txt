@@ -8,3 +8,8 @@ ccxt==1.17.434
 qrcode==6.1
 pycryptodome==3.8.0
 base58==0.2.5
+sendypy==0.1.5b0
+psycopg2-binary==2.8.2
+PALs==0.2.0
+peewee==3.9.4
+dsnparse==0.1.12

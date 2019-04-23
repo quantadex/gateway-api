@@ -4,12 +4,9 @@ from flask import request
 
 from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search, query, Q, DocType, utils
-from elasticsearch_dsl.exceptions import IllegalOperation
+from elasticsearch_dsl import Search, Q
 
-from registration import register_user, register_airdrop
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from src.registration import register_user, register_airdrop
 import ccxt
 import urllib
 
@@ -18,7 +15,8 @@ from flasgger import Swagger
 
 es = Elasticsearch([os.environ['ELASTICSEARCH_URL']],timeout=60)
 app = Flask(__name__)
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
+
 CORS(app)
 
 app.config['SWAGGER'] = {
@@ -167,6 +165,8 @@ def get_trx():
 
     return jsonify(results)
 
+import pals
+
 @app.route('/register_account',methods=['POST'])
 # @limiter.limit("10 per day")
 def register_account():
@@ -176,7 +176,13 @@ def register_account():
     content = request.json
 
     try:
+        locker = pals.Locker('quanta-api', os.environ.get("DB_URL"))
+        lock = locker.lock("registration")
+
+        lock.acquire(blocking=True)
         register_user(content["name"], content["public_key"], registrar, "referrer" in content and content["referrer"] or referrer_default)
+        lock.release()
+
         return jsonify({"status": "success"})
     except Exception as inst:
         return jsonify({"error": str(inst)}), 400
@@ -216,14 +222,19 @@ def claim_airdrop():
 
 
 
-from email_api import verify_email, check_code, send_walletinfo
+from src.email_api import verify_email, check_code, send_walletinfo, checkRecaptcha
+from src.mailinglist import subscribe
+from src.db import create_user
 
 @app.route('/account/verify_email',methods=['POST'])
 def verify_email_post():
     content = request.json
     try:
-        verify_email(content["email"])
-        return jsonify({"success": True})
+        if checkRecaptcha(content["recaptcha"], os.environ.get("SITE_SECRET")):
+            verify_email(content["email"])
+            return jsonify({"success": True})
+        else:
+            return jsonify({"error": "recaptcha failed"})
     except Exception as inst:
         return jsonify({"error": str(inst)}), 200
 
@@ -232,6 +243,7 @@ def confirm_email_post():
     content = request.json
     try:
         if check_code(content["email"], int(content["confirm"])):
+            subscribe(content["email"],"")
             return jsonify({"success": True})
         else:
             return jsonify({"error": "wrong code"}), 400
@@ -243,6 +255,8 @@ def sendwallet_post():
     content = request.json
     try:
         send_walletinfo(content["email"], int(content["confirm"]), content["public_key"], content["account"], content["json"])
+        create_user(content["email"],content["public_key"], content["account"])
+        subscribe(content["email"], content["account"])
         return jsonify({"success": True})
     except Exception as inst:
         return jsonify({"error": str(inst)}), 200

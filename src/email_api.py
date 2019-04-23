@@ -19,12 +19,27 @@ from PIL import Image, ImageDraw
 import io
 import json
 from binascii import hexlify, unhexlify
+from src.registration import register_user
 
 verifyTemplate = open('verify_email.template', 'r').read()
 walletInfoTemplate = open('walletinfo_email.template', 'r').read()
 
 smtp_options = {'host':os.environ.get("SMTP_HOST"), 'port': 587, 'ssl': False, 'user': os.environ.get("SMTP_USER"), 'password': os.environ.get("SMTP_PASS")}
 email_from = "QUANTA<no-reply@quantadex.com>"
+
+
+import urllib
+def checkRecaptcha(response, secretkey):
+    url = 'https://www.google.com/recaptcha/api/siteverify?'
+    url = url + 'secret=' + str(secretkey)
+    url = url + '&response=' + str(response)
+
+    jsonobj = json.loads(urllib.request.urlopen(url).read())
+    if jsonobj['success']:
+        return True
+    else:
+        return False
+
 
 def get_code(email):
     sig = hmac.new(bytes(os.environ.get("HMAC_SECRET"),'UTF-8'), bytes(email, "UTF-8"), hashlib.sha256)
@@ -69,8 +84,20 @@ def make_qr(json):
     #img.save("img1.png")
     return img
 
+import pals
 def send_walletinfo(email, confirm, public_key, account, json_str):
     if check_code(email, confirm):
+
+        locker = pals.Locker('quanta-api', os.environ.get("DB_URL"))
+        lock = locker.lock("registration")
+
+        lock.acquire(blocking=True)
+        registrar = os.environ.get("REGISTRAR")
+        referrer_default = os.environ.get("REFERRER")
+        register_user(account, public_key, registrar,referrer_default)
+
+        lock.release()
+
         rawJson = base64.decodebytes(bytes(json_str,"UTF-8"))
         filename = "quanta_wallet.json"
         part = MIMEApplication(
