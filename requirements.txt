@@ -13,3 +13,4 @@ psycopg2-binary==2.8.2
 PALs==0.2.0
 peewee==3.9.4
 dsnparse==0.1.12
+cachetools==3.1.0

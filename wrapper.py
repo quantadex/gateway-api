@@ -187,22 +187,38 @@ def register_account():
     except Exception as inst:
         return jsonify({"error": str(inst)}), 400
 
-@app.route('/get_external_price')
-def get_external_price():
-    exchange_str = request.args.get('exchange')
-    symbol = urllib.parse.unquote(request.args.get('symbol'))
-    timeframe = request.args.get('timeframe',"1m").lower()
-    since = request.args.get('since')
-    limit = int(request.args.get('limit',"1000"))
+import time
+from cachetools import cached, LRUCache, TTLCache
 
+@cached(cache=TTLCache(maxsize=1024, ttl=15))
+def get_data(exchange_str, symbol, timeframe, since, limit):
     exchange_found = exchange_str in ccxt.exchanges
     if exchange_found:
         exchange = getattr(ccxt, exchange_str)({
             'timeout': 20000})
         if since is None:
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe)
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe,limit=limit)
+            return ohlcv
         else:
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, int(since), limit)
+            ohlcv = exchange.fetch_ohlcv
+            return ohlcv
+    return None
+
+@app.route('/get_external_price')
+def get_external_price():
+
+    start = time.time()
+    exchange_str = request.args.get('exchange')
+    symbol = urllib.parse.unquote(request.args.get('symbol'))
+    timeframe = request.args.get('timeframe',"1m").lower()
+    since = request.args.get('since')
+    limit = int(request.args.get('limit',"300"))
+
+    ohlcv = get_data(exchange_str, symbol, timeframe, since, limit)
+    end = time.time()
+    print("Exchange API Response", end - start)
+
+    if ohlcv:
         return jsonify(ohlcv)
     else:
         return jsonify({"error": "exchange not found"}), 400
@@ -263,4 +279,4 @@ def sendwallet_post():
         return jsonify({"error": str(inst)}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000,threaded=True)
+    app.run(host='0.0.0.0', port=5000)
