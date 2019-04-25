@@ -85,16 +85,15 @@ def make_qr(json):
     return img
 
 import pals
-def send_walletinfo(email, confirm, public_key, account, json_str):
+def send_walletinfo(email, confirm, public_key, account, json_str,referrer):
     if check_code(email, confirm):
 
         locker = pals.Locker('quanta-api', os.environ.get("DB_URL"))
         lock = locker.lock("registration")
-
         lock.acquire(blocking=True)
+
         registrar = os.environ.get("REGISTRAR")
-        referrer_default = os.environ.get("REFERRER")
-        register_user(account, public_key, registrar,referrer_default)
+        register_user(account, public_key, registrar,referrer)
 
         lock.release()
 

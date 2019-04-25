@@ -254,7 +254,8 @@ def confirm_email_post():
 def sendwallet_post():
     content = request.json
     try:
-        send_walletinfo(content["email"], int(content["confirm"]), content["public_key"], content["account"], content["json"])
+        referrer_default = os.environ.get("REFERRER")
+        send_walletinfo(content["email"], int(content["confirm"]), content["public_key"], content["account"], content["json"],"referrer" in content and content["referrer"] or referrer_default)
         create_user(content["email"],content["public_key"], content["account"])
         subscribe(content["email"], content["account"])
         return jsonify({"success": True})
@@ -262,4 +263,4 @@ def sendwallet_post():
         return jsonify({"error": str(inst)}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000,threaded=True)
