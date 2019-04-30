@@ -241,11 +241,25 @@ def claim_airdrop():
 from src.email_api import verify_email, check_code, send_walletinfo, checkRecaptcha
 from src.mailinglist import subscribe
 from src.db import create_user
+import hashlib
+import hmac
+import base64
+from binascii import hexlify, unhexlify
 
 @app.route('/account/verify_email',methods=['POST'])
 def verify_email_post():
     content = request.json
     try:
+        sig = request.headers.get('signature')
+        if sig is not None:
+            sigObj = hmac.new(bytes(os.environ.get("MOBILE_SECRET"), 'UTF-8'), request.data, hashlib.sha256)
+            expectSig = hexlify(sigObj.digest()).decode("ascii")
+            if sig == expectSig:
+                verify_email(content["email"])
+                return jsonify({"success": True})
+            else:
+                print(sig, expectSig)
+                return jsonify({"error": str("unexpected sig")}), 400
         if checkRecaptcha(content["recaptcha"], os.environ.get("SITE_SECRET")):
             verify_email(content["email"])
             return jsonify({"success": True})
