@@ -51,6 +51,43 @@ def get_account_history():
     else:
         s = Search(using=es, index="quanta-*", extra={"size": size, "from": from_})
 
+
+    if type == "agg_by_risk":
+        s.update_from_dict({
+             "aggs": {
+                  "by_asset": {
+                      "terms": {
+                          "field": "operation_history.op_object.risk.asset_id.keyword"
+                      },
+                      "aggs": {
+                          "total_risk": {
+                              "sum": {
+                                  "field": "operation_history.op_object.risk.amount"
+                              }
+                          }
+                      }
+                  }
+            }
+        })
+    if type == "agg_by_payout":
+        s.update_from_dict({
+             "aggs": {
+                  "by_asset": {
+                      "terms": {
+                          "field": "operation_history.op_object.risk.asset_id.keyword"
+                      },
+                      "aggs": {
+                          "total_payout": {
+                              "sum": {
+                                  "field": "operation_history.op_object.payout.amount"
+                              }
+                          }
+                      }
+                  }
+            }
+        })
+
+
     q = Q()
     if account_id and operation_type:
         q = Q("match", account_history__account=account_id) & Q("match", operation_type=operation_type)
@@ -62,28 +99,28 @@ def get_account_history():
     range_query = Q("range", block_data__block_time={'gte': from_date, 'lte': to_date})
     s.query = q & range_query
 
-    #operation_history__operation_result
-    if filter_field and filter_value:   
-        #print(filter_field,filter_value.split(","))   
-        kv = { filter_field:  filter_value.split(",")}  
+    if filter_field and filter_value:
+        kv = { filter_field:  filter_value.split(",")}
+
         s = s.filter("terms", **kv)
 
-    if type != "data":
-        s.aggs.bucket('per_field', 'terms', field=agg_field, size=size)
+    if type == "agg_by_payout":
+        kv = { "operation_history.op_object.payout.amount" : { 'gte': 0}}
+        s = s.filter("range", **kv)
 
     s = s.sort(sort_by)
 
-    #print s.to_dict()
+    #print (s.to_dict())
 
     response = s.execute()
-    #print response
+    #print (response)
     results = []
     #print s.count()
     if type == "data":
         for hit in response:
             results.append(hit.to_dict())
     else:
-        for field in response.aggregations.per_field.buckets:
+        for field in response.aggregations:
             results.append(field.to_dict())
 
     return jsonify(results)
@@ -290,7 +327,7 @@ def sendwallet_post():
         subscribe(content["email"], content["account"])
         return jsonify({"success": True})
     except Exception as inst:
-        return jsonify({"error": str(inst)}), 200
+        return jsonify({"error": repr(inst)}), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
