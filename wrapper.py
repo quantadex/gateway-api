@@ -69,12 +69,13 @@ def get_account_history():
                   }
             }
         })
-    if type == "agg_by_payout":
+
+    if type == "agg_by_payout" or type == "agg_by_loss":
         s.update_from_dict({
              "aggs": {
                   "by_asset": {
                       "terms": {
-                          "field": "operation_history.op_object.risk.asset_id.keyword"
+                          "field": "operation_history.op_object.payout.asset_id.keyword"
                       },
                       "aggs": {
                           "total_payout": {
@@ -106,6 +107,9 @@ def get_account_history():
 
     if type == "agg_by_payout":
         kv = { "operation_history.op_object.payout.amount" : { 'gte': 0}}
+        s = s.filter("range", **kv)
+    elif type == "agg_by_loss":
+        kv = { "operation_history.op_object.payout.amount" : { 'lte': 0}}
         s = s.filter("range", **kv)
 
     s = s.sort(sort_by)
